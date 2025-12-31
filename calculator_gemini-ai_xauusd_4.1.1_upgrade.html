@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCA MONITOR v4.1.1 - INSTITUTIONAL LOCK</title>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; transition: background 0.3s; }
+        .container { max-width: 550px; margin: auto; background: #0a0a0a; border: 2px solid #333; padding: 15px; border-radius: 12px; }
+        
+        /* IDENTITY COLOR SYSTEM */
+        .H1 { border-color: #A020F0 !important; color: #A020F0; } 
+        .M30 { border-color: #0000FF !important; color: #0000FF; } 
+        .M15 { border-color: #FFFF00 !important; color: #FFFF00; } 
+        .M5 { border-color: #00FF00 !important; color: #00FF00; }  
+        .H2 { border-color: #FFA500 !important; color: #FFA500; }  
+        .H4 { border-color: #FF69B4 !important; color: #FF69B4; }  
+        .D1 { border-color: #FF0000 !important; color: #FF0000; }  
+
+        /* NEWS ALERT SYSTEM */
+        .news-box { background: #1a0000; border: 2px solid #f00; padding: 10px; margin-bottom: 15px; border-radius: 8px; text-align: center; }
+        .news-timer { font-size: 1.5em; font-weight: bold; color: #f00; }
+        .warning-active { animation: emergency 0.4s infinite; }
+        @keyframes emergency { 0%, 100% { background: #000; } 50% { background: #600; } }
+
+        input, select { background: #111; color: #0f0; border: 1px solid #444; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-weight: bold; }
+        button { width: 100%; padding: 15px; background: #0f0; color: #000; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; text-transform: uppercase; }
+        
+        .price-live-box { text-align: center; border: 2px dashed #444; padding: 10px; margin-bottom: 15px; }
+        .mission-card { padding: 12px; margin-bottom: 8px; border-left: 10px solid; background: #151515; border-radius: 0 8px 8px 0; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .card-actions { display: flex; gap: 5px; }
+        .btn-mini { padding: 5px 10px; border: 1px solid #444; background: #222; color: #fff; font-size: 10px; cursor: pointer; border-radius: 4px; }
+        
+        .hit-animation { background: #003300 !important; border-right: 5px solid #0f0; }
+        .fail-animation { background: #330000 !important; border-right: 5px solid #f00; opacity: 0.6; }
+
+        .journal-box { margin-top: 20px; border: 1px solid #333; padding: 10px; background: #050505; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #222; padding: 5px; text-align: left; }
+    </style>
+</head>
+<body id="mainBody">
+
+<div class="container">
+    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.1</h2>
+
+    <div class="news-box">
+        <input type="time" id="newsTime" onchange="setNewsTimer()">
+        <div id="countdownDisplay" class="news-timer">00:00:00</div>
+        <small id="newsStatus">NEWS SENTINEL: STANDBY</small>
+    </div>
+
+    <div class="price-live-box">
+        <span style="font-size: 10px; color: #ff4444; font-weight: bold;">[MANUAL INPUT - FOR AUDIT ONLY]</span>
+        <input type="number" id="currentPrice" step="0.001" placeholder="RUNNING PRICE..." oninput="checkAlerts()">
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <span style="font-size: 10px; color: #777;">MARKET CONTEXT (REGIME AWARENESS):</span>
+        <select id="marketContext" style="margin-top: 5px; border-color: #555;">
+            <option value="RANGING">REGIME: RANGING (STABLE)</option>
+            <option value="TRENDING">REGIME: TRENDING (LINEAR EXPANSION)</option>
+            <option value="VOLATILE">REGIME: VOLATILE (HIGH RISK)</option>
+        </select>
+    </div>
+
+    <select id="tfSelect">
+        <option value="D1">D1 (VRE: 5.0)</option><option value="H4">H4 (VRE: 3.0)</option>
+        <option value="H2">H2 (VRE: 2.0)</option><option value="H1">H1 (VRE: 1.5)</option>
+        <option value="M30">M30 (VRE: 1.0)</option><option value="M15">M15 (VRE: 0.5)</option>
+        <option value="M5" selected>M5 (VRE: 0.2)</option>
+    </select>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+        <input type="number" id="o" placeholder="OPEN"> <input type="number" id="h" placeholder="HIGH">
+        <input type="number" id="l" placeholder="LOW"> <input type="number" id="c" placeholder="CLOSE">
+    </div>
+
+    <button onclick="addMission()">LOCK LPZ MONITOR</button>
+
+    <div id="missionList"></div>
+
+    <div class="journal-box">
+        <h4 style="margin:0; color:#0f0;">PROBE LOG (HISTORICAL AUDIT)</h4>
+        <table id="journalTable">
+            <thead><tr><th>TF</th><th>TYPE</th><th>LPZ PRICE</th><th>STATUS</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="downloadLog()" style="margin-top:10px; background:#333; color:#aaa; padding:8px; font-size: 10px;">EXPORT AUDIT LOG (.TXT)</button>
+    </div>
+</div>
+
+<script>
+    let missions = JSON.parse(localStorage.getItem('bcaMissions')) || [];
+    let journal = JSON.parse(localStorage.getItem('bcaJournal')) || [];
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let newsInterval;
+
+    function beep(f=750, d=0.2) {
+        const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type="square"; o.frequency.value=f; g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime+d);
+    }
+
+    function setNewsTimer() {
+        if(newsInterval) clearInterval(newsInterval);
+        newsInterval = setInterval(() => {
+            const timeVal = document.getElementById('newsTime').value;
+            if(!timeVal) return;
+            const now = new Date(); const [hrs, mins] = timeVal.split(':');
+            const target = new Date(); target.setHours(hrs, mins, 0);
+            let diff = target - now;
+            if (diff < 0) { 
+                document.getElementById('countdownDisplay').innerText = "NEWS ACTIVE"; 
+                document.getElementById('mainBody').classList.remove('warning-active');
+                return; 
+            }
+            const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
+            document.getElementById('countdownDisplay').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if(diff <= 300000) { 
+                document.getElementById('mainBody').classList.add('warning-active'); 
+                document.getElementById('newsStatus').innerText = "CLEAR ALL POSITIONS NOW!";
+                if(s % 2 === 0) beep(440, 0.05); 
+            }
+        }, 1000);
+    }
+
+    function addMission() {
+        const tf = document.getElementById('tfSelect').value;
+        const o = parseFloat(document.getElementById('o').value);
+        const h = parseFloat(document.getElementById('h').value);
+        const l = parseFloat(document.getElementById('l').value);
+        const c = parseFloat(document.getElementById('c').value);
+        const context = document.getElementById('marketContext').value;
+        if(!o || !h || !l || !c) return;
+        
+        const mult = { 'M5':0.2, 'M15':0.5, 'M30':1.0, 'H1':1.5, 'H2':2.0, 'H4':3.0, 'D1':5.0 };
+        let target = (c > o) ? h + (Math.abs(c-o) * mult[tf]) : l - (Math.abs(c-o) * mult[tf]);
+        
+        missions.push({ 
+            id:Date.now(), tf, price:parseFloat(target.toFixed(3)), 
+            type:(c>o)?'BUY':'SELL', status:'ACTIVE', context:context 
+        });
+        saveAndRender();
+        ['o','h','l','c'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function checkAlerts() {
+        const cur = parseFloat(document.getElementById('currentPrice').value);
+        missions.forEach(m => {
+            if (m.status === 'ACTIVE') {
+                if ((m.type==='BUY' && cur>=m.price) || (m.type==='SELL' && cur<=m.price)) {
+                    updateStatus(m.id, 'TOUCHED');
+                    beep(900, 0.4);
+                }
+            }
+        });
+    }
+
+    function updateStatus(id, newStatus) {
+        const m = missions.find(x => x.id === id);
+        if(m) {
+            m.status = newStatus;
+            journal.push({ ...m, timeStamp: new Date().toLocaleTimeString() });
+            saveAndRender();
+        }
+    }
+
+    function removeMission(id) { 
+        missions = missions.filter(m => m.id !== id); 
+        saveAndRender(); 
+    }
+
+    function downloadLog() {
+        let text = "BCA AUDIT LOG v4.1.1\n====================\n";
+        journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status} | CONTEXT: ${j.context}\n`);
+        const blob = new Blob([text], { type: 'text/plain' });
+        const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
+        a.href = window.URL.createObjectURL(blob); a.click();
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('bcaMissions', JSON.stringify(missions));
+        localStorage.setItem('bcaJournal', JSON.stringify(journal));
+        const list = document.getElementById('missionList');
+        list.innerHTML = missions.map(m => `
+            <div class="mission-card ${m.tf} ${m.status === 'TOUCHED' ? 'hit-animation' : (m.status === 'FAILED' ? 'fail-animation' : '')}">
+                <div class="card-header">
+                    <div>
+                        <span style="font-size: 10px; opacity: 0.7;">${m.tf} LPZ (${m.type})</span>
+                        <div style="font-size: 1.3em; font-weight: bold;">${m.price}</div>
+                    </div>
+                    <div class="card-actions">
+                        ${m.status === 'ACTIVE' ? `
+                            <button class="btn-mini" onclick="updateStatus(${m.id}, 'FAILED')">FAIL</button>
+                            <button class="btn-mini" onclick="updateStatus(${m.id}, 'TIMEOUT')">T.O</button>
+                        ` : `<span style="font-size: 10px; font-weight: bold;">[${m.status}]</span>`}
+                        <button class="btn-mini" style="color:red;" onclick="removeMission(${m.id})">X</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        const jBody = document.querySelector('#journalTable tbody');
+        jBody.innerHTML = journal.slice(-5).map(j => `<tr><td>${j.tf}</td><td>${j.type}</td><td>${j.price}</td><td>${j.status}</td></tr>`).join('');
+    }
+    saveAndRender();
+</script>
+</body>
+</html>
