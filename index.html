@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCA MONITOR v4.1.2 - STACKING MISSION</title>
+    <title>BCA MONITOR v4.1.5 - DECISION FRAMEWORK (ADD-ONLY)</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; transition: background 0.3s; }
         .container { max-width: 550px; margin: auto; background: #0a0a0a; border: 2px solid #333; padding: 15px; border-radius: 12px; }
         
-        /* IDENTITY COLOR SYSTEM */
+        /* IDENTITY COLOR SYSTEM - HIGH ACCURACY STANDARDS */
         .H1 { border-color: #A020F0 !important; color: #A020F0; } 
         .M30 { border-color: #0000FF !important; color: #0000FF; } 
         .M15 { border-color: #FFFF00 !important; color: #FFFF00; } 
@@ -37,13 +37,19 @@
         .journal-box { margin-top: 20px; border: 1px solid #333; padding: 10px; background: #050505; font-size: 11px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #222; padding: 5px; text-align: left; }
+
+        /* ADD-ONLY: DECISION FRAMEWORK STYLE */
+        .df-box { border: 1px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 15px; background: #0a0a00; }
+        .df-title { color: #ffcc00; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: block; }
+        .df-item { margin-bottom: 5px; }
+        .df-item label { font-size: 10px; color: #ccc; display: block; }
     </style>
 </head>
 <body id="mainBody">
 
 <div class="container">
-    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.2</h2>
-    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">STACKING MISSION EDITION</p>
+    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.5</h2>
+    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">DECISION FRAMEWORK - ADD ONLY</p>
 
     <div class="news-box">
         <input type="time" id="newsTime" onchange="setNewsTimer()">
@@ -54,6 +60,11 @@
     <div class="price-live-box">
         <span style="font-size: 10px; color: #ff4444; font-weight: bold;">[MANUAL INPUT - FOR AUDIT ONLY]</span>
         <input type="number" id="currentPrice" step="0.001" placeholder="RUNNING PRICE..." oninput="checkAlerts()">
+    </div>
+
+    <div style="border: 1px solid #0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; background: #000500;">
+        <span style="font-size: 10px; color: #0f0;">QUICK AUDIT: PASTE OHLC HERE (O H L C)</span>
+        <input type="text" id="fastPaste" placeholder="O H L C" oninput="handleFastPaste(this.value)" style="border-color: #0f0;">
     </div>
 
     <div style="margin-bottom: 10px;">
@@ -73,11 +84,32 @@
     </select>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-        <input type="number" id="o" placeholder="OPEN"> <input type="number" id="h" placeholder="HIGH">
-        <input type="number" id="l" placeholder="LOW"> <input type="number" id="c" placeholder="CLOSE">
+        <input type="number" id="o" step="0.001" placeholder="OPEN"> <input type="number" id="h" step="0.001" placeholder="HIGH">
+        <input type="number" id="l" step="0.001" placeholder="LOW"> <input type="number" id="c" step="0.001" placeholder="CLOSE">
     </div>
 
-    <button onclick="addMission()">LOCK LPZ MONITOR</button>
+    <div class="df-box">
+        <span class="df-title">🧠 DECISION FRAMEWORK (MANUAL AUDIT)</span>
+        <div class="df-item">
+            <label>1. Harga datang sebagai:</label>
+            <select id="df_arrival" style="padding: 5px; font-size: 11px; border-color: #ffcc00;">
+                <option value="">-- Pilih Niat --</option>
+                <option value="IMPULSE">IMPULS (Power)</option>
+                <option value="RETRACE">RETRACE (Napas)</option>
+                <option value="EXHAUST">EXHAUSTION (Lelah)</option>
+            </select>
+        </div>
+        <div class="df-item">
+            <label>2. Candle Asal LPZ:</label>
+            <select id="df_origin" style="padding: 5px; font-size: 11px; border-color: #ffcc00;">
+                <option value="">-- Pilih Kualitas --</option>
+                <option value="STRONG">STRONG BODY (Valid)</option>
+                <option value="WICKY">WICK DOMINAN (Umpan)</option>
+            </select>
+        </div>
+    </div>
+
+    <button id="lockBtn" onclick="addMission()">LOCK LPZ MONITOR</button>
 
     <div id="missionList"></div>
 
@@ -97,8 +129,11 @@
 </div>
 
 <script>
+/* =========================================================
+ 🔐 BCA MONITOR CORE ENGINE — HARAM DIUBAH
+ ========================================================= */
     let missions = JSON.parse(localStorage.getItem('bcaMissions')) || [];
-    let journal = JSON.parse(localStorage.getItem('bcaJournal')) || [];
+    let journal  = JSON.parse(localStorage.getItem('bcaJournal'))  || [];
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let newsInterval;
 
@@ -107,6 +142,16 @@
         o.connect(g); g.connect(audioCtx.destination);
         o.type="square"; o.frequency.value=f; g.gain.setValueAtTime(0.1, audioCtx.currentTime);
         o.start(); o.stop(audioCtx.currentTime+d);
+    }
+
+    function handleFastPaste(val) {
+        const parts = val.trim().split(/[\s,\t]+/);
+        if (parts.length >= 4) {
+            document.getElementById('o').value = parts[0];
+            document.getElementById('h').value = parts[1];
+            document.getElementById('l').value = parts[2];
+            document.getElementById('c').value = parts[3];
+        }
     }
 
     function setNewsTimer() {
@@ -144,13 +189,12 @@
         const mult = { 'M5':0.2, 'M15':0.5, 'M30':1.0, 'H1':1.5, 'H2':2.0, 'H4':3.0, 'D1':5.0 };
         let target = (c > o) ? h + (Math.abs(c-o) * mult[tf]) : l - (Math.abs(c-o) * mult[tf]);
         
-        // STACKING LOGIC: Unique ID per click
         missions.push({ 
             id:Date.now(), tf, price:parseFloat(target.toFixed(3)), 
             type:(c>o)?'BUY':'SELL', status:'ACTIVE', context:context 
         });
         saveAndRender();
-        ['o','h','l','c'].forEach(id => document.getElementById(id).value = '');
+        ['o','h','l','c','fastPaste'].forEach(id => document.getElementById(id).value = '');
     }
 
     function checkAlerts() {
@@ -179,7 +223,6 @@
         saveAndRender(); 
     }
 
-    // PATCH SAH: CLEAR & RESET FUNCTIONS
     function clearAuditLog() {
         journal = [];
         localStorage.setItem('bcaJournal', JSON.stringify(journal));
@@ -194,8 +237,8 @@
     }
 
     function downloadLog() {
-        let text = "BCA AUDIT LOG v4.1.2\n====================\n";
-        journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status} | CONTEXT: ${j.context}\n`);
+        let text = "BCA AUDIT LOG v4.1.5\n====================\n";
+        journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status}\n`);
         const blob = new Blob([text], { type: 'text/plain' });
         const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
         a.href = window.URL.createObjectURL(blob); a.click();
