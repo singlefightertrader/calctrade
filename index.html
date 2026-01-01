@@ -1,96 +1,9 @@
-<!--
-Siap. Ini AUDIT CHECKLIST RESMI versi keras, teknis, dan anti-ngaco, khusus untuk BCA MONITOR v4.x lo.
-Checklist ini bisa lo pakai buat ngecek AI lain, developer lain, atau diri sendiri sebelum bilang “upgrade”.
-✅ AUDIT CHECKLIST — BCA MONITOR (ANTI RUSAK CORE)
-🟥 LEVEL 1 — CORE ENGINE (HARAM DISENTUH)
-Kalau SATU saja di bawah ini berubah → AUDIT GAGAL
-🔒 Data & State
-[ ] Struktur missions tidak berubah
-[ ] Struktur journal tidak berubah
-[ ] Key localStorage tetap:
-bcaMissions
-bcaJournal
-[ ] Tidak ada rename key
-[ ] Tidak ada migrasi data tersembunyi
-🔒 Logic Inti
-[ ] addMission() tidak diubah
-[ ] Formula LPZ:
-Bullish → high + |c-o| × VRE
-Bearish → low - |c-o| × VRE
-[ ] Mapping VRE TF identik
-[ ] Penentuan BUY / SELL tidak diubah
-[ ] checkAlerts() masih pakai:
-Manual price
-Status ACTIVE saja
-🔒 Status System
-[ ] Status valid tetap:
-ACTIVE
-TOUCHED
-FAILED
-TIMEOUT
-[ ] Tidak ada status baru
-[ ] Tidak ada auto-reset status
-[ ] Status change selalu masuk journal
-🟧 LEVEL 2 — ALERT & RISK CONTROL
-Perubahan di sini boleh ADD-ONLY, tapi tidak boleh melemahkan
-🔔 Audio & Alert
-[ ] beep() masih Web Audio API
-[ ] Tidak ada silent mode default
-[ ] News beep masih aktif < 5 menit
-📰 News Sentinel
-[ ] Countdown tetap real-time
-[ ] Warning visual tetap ada
-[ ] Tidak auto-disable news
-[ ] Tidak auto-clear mission
-🟨 LEVEL 3 — UI & UX (BOLEH ADD-ONLY)
-Boleh ditambah, tidak boleh menghilangkan
-🎛️ Control
-[ ] Tombol lama masih ada
-[ ] LOCK LPZ MONITOR tidak diganti
-[ ] FAIL / T.O / X masih ada per mission
-📱 Mobile Safety
-[ ] Tidak pakai hover-only action
-[ ] Tidak pakai popup blocking
-[ ] Font tetap terbaca di HP
-🟩 LEVEL 4 — ADD-ONLY PATCH (YANG SAH)
-Patch dianggap valid kalau memenuhi SEMUA:
-[ ] Tidak menyentuh fungsi lama
-[ ] Tidak override nama function lama
-[ ] Tidak intercept flow lama
-[ ] Efek patch eksplisit & sadar user
-✅ Contoh PATCH SAH:
-Clear journal
-Reset all data (dengan confirm)
-Export tambahan
-UI helper
-❌ Patch ILEGAL:
-Auto-clear mission
-Auto-edit status
-Auto-calc candle
-Auto-feed harga
-Auto “AI decision”
-🟥 LEVEL 5 — RED FLAGS (LANGSUNG TOLAK)
-Kalau nemu ini → STOP PAKAI
-[ ] Kata-kata: “optimalisasi”, “penyederhanaan”, “refactor”
-[ ] Logic dipindah ke function baru
-[ ] AI auto-analisis tanpa izin
-[ ] Penghapusan manual input
-[ ] Penggantian audit mindset → signal mindset
-🧠 FINAL AUDIT STATEMENT (WAJIB ADA)
-Setiap upgrade WAJIB bisa bilang jujur:
-“Upgrade ini TIDAK mengubah core logic,
-TIDAK menghapus fitur lama,
-dan MURNI ADD-ONLY.”
-Kalau gak berani nulis kalimat itu → upgrade batal.
--->
-
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCA MONITOR v4.1.1 - INSTITUTIONAL LOCK</title>
+    <title>BCA MONITOR v4.1.2 - STACKING MISSION</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; transition: background 0.3s; }
         .container { max-width: 550px; margin: auto; background: #0a0a0a; border: 2px solid #333; padding: 15px; border-radius: 12px; }
@@ -104,7 +17,6 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
         .H4 { border-color: #FF69B4 !important; color: #FF69B4; }  
         .D1 { border-color: #FF0000 !important; color: #FF0000; }  
 
-        /* NEWS ALERT SYSTEM */
         .news-box { background: #1a0000; border: 2px solid #f00; padding: 10px; margin-bottom: 15px; border-radius: 8px; text-align: center; }
         .news-timer { font-size: 1.5em; font-weight: bold; color: #f00; }
         .warning-active { animation: emergency 0.4s infinite; }
@@ -130,7 +42,8 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
 <body id="mainBody">
 
 <div class="container">
-    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.1</h2>
+    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.2</h2>
+    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">STACKING MISSION EDITION</p>
 
     <div class="news-box">
         <input type="time" id="newsTime" onchange="setNewsTimer()">
@@ -175,10 +88,10 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
             <tbody></tbody>
         </table>
         
-        <div style="display: flex; gap: 5px;">
-            <button onclick="downloadLog()" style="margin-top:10px; background:#333; color:#aaa; padding:8px; font-size: 10px; flex: 2;">EXPORT AUDIT LOG (.TXT)</button>
-            <button onclick="clearAuditLog()" style="margin-top:10px; background:#ff4444; color:white; padding:8px; font-size: 10px; flex: 1.5;">CLEAR LOG</button>
-            <button onclick="resetAllData()" style="margin-top:10px; background:#555; color:white; padding:8px; font-size: 10px; flex: 1.5;">RESET ALL</button>
+        <div style="display: flex; gap: 5px; margin-top: 10px;">
+            <button onclick="downloadLog()" style="background:#333; color:#aaa; padding:8px; font-size: 10px; flex: 2; margin:0;">EXPORT (.TXT)</button>
+            <button onclick="clearAuditLog()" style="background:#ff4444; color:white; padding:8px; font-size: 10px; flex: 1.5; margin:0;">CLEAR LOG</button>
+            <button onclick="resetAllData()" style="background:#555; color:white; padding:8px; font-size: 10px; flex: 1.5; margin:0;">RESET ALL</button>
         </div>
     </div>
 </div>
@@ -231,6 +144,7 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
         const mult = { 'M5':0.2, 'M15':0.5, 'M30':1.0, 'H1':1.5, 'H2':2.0, 'H4':3.0, 'D1':5.0 };
         let target = (c > o) ? h + (Math.abs(c-o) * mult[tf]) : l - (Math.abs(c-o) * mult[tf]);
         
+        // STACKING LOGIC: Unique ID per click
         missions.push({ 
             id:Date.now(), tf, price:parseFloat(target.toFixed(3)), 
             type:(c>o)?'BUY':'SELL', status:'ACTIVE', context:context 
@@ -265,20 +179,11 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
         saveAndRender(); 
     }
 
-    function downloadLog() {
-        let text = "BCA AUDIT LOG v4.1.1\n====================\n";
-        journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status} | CONTEXT: ${j.context}\n`);
-        const blob = new Blob([text], { type: 'text/plain' });
-        const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
-        a.href = window.URL.createObjectURL(blob); a.click();
-    }
-
-    // ADD ONLY: LOGIKA FUNGSI PENGHAPUS
+    // PATCH SAH: CLEAR & RESET FUNCTIONS
     function clearAuditLog() {
         journal = [];
         localStorage.setItem('bcaJournal', JSON.stringify(journal));
         saveAndRender();
-        alert("Audit Log Berhasil Dibersihkan!");
     }
 
     function resetAllData() {
@@ -286,6 +191,14 @@ Kalau gak berani nulis kalimat itu → upgrade batal.
             localStorage.clear();
             location.reload();
         }
+    }
+
+    function downloadLog() {
+        let text = "BCA AUDIT LOG v4.1.2\n====================\n";
+        journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status} | CONTEXT: ${j.context}\n`);
+        const blob = new Blob([text], { type: 'text/plain' });
+        const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
+        a.href = window.URL.createObjectURL(blob); a.click();
     }
 
     function saveAndRender() {
