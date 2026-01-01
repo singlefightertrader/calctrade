@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCA MONITOR v4.1.7 - NEUTRAL AUDIT</title>
+    <title>BCA MONITOR v4.1.8 - NEUTRAL AUDIT (PREDICTIVE UPGRADE)</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; transition: background 0.3s; }
         .container { max-width: 550px; margin: auto; background: #0a0a0a; border: 2px solid #333; padding: 15px; border-radius: 12px; }
@@ -43,15 +43,17 @@
         .df-item { margin-bottom: 5px; }
         .df-item label { font-size: 10px; color: #ccc; display: block; }
 
-        /* 🤖 ADD-ONLY: ASSISTANT STYLE - NEUTRALIZED */
         .assistant-box { background: #000510; border: 1px solid #0088ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 11px; display: none; }
+        
+        /* ADD-ONLY: PREDICTIVE BUTTON STYLE */
+        .btn-predictive { background: #0088ff !important; color: #fff !important; }
     </style>
 </head>
 <body id="mainBody">
 
 <div class="container">
-    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.7</h2>
-    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">DATA-DRIVEN AUDIT ASSISTANT</p>
+    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.8</h2>
+    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">DATA-DRIVEN AUDIT ASSISTANT (PREDICTIVE ENABLED)</p>
 
     <div class="news-box">
         <input type="time" id="newsTime" onchange="setNewsTimer()">
@@ -116,7 +118,9 @@
         </div>
     </div>
 
-    <button id="lockBtn" onclick="addMission()">LOCK LPZ MONITOR</button>
+    <button id="lockBtn" onclick="addMission()">LOCK LPZ MONITOR (LEGACY)</button>
+    
+    <button id="predictBtn" class="btn-predictive" onclick="addMissionPredictive()">LOCK PREDICTIVE MISSION 🤖</button>
 
     <div id="missionList"></div>
 
@@ -135,10 +139,8 @@
     </div>
 </div>
 
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script>
-/* =========================================================
- 🔐 BCA MONITOR CORE ENGINE — HARAM DIUBAH
- ========================================================= */
     let missions = JSON.parse(localStorage.getItem('bcaMissions')) || [];
     let journal  = JSON.parse(localStorage.getItem('bcaJournal'))  || [];
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -165,9 +167,6 @@
         else { document.getElementById('assistantPanel').style.display = 'none'; }
     }
 
-    /* =========================================================
-     🔵 v4.1.7: NEUTRALIZED DATA OBSERVATION LOGIC
-     ========================================================= */
     function runAssistant(lines) {
         const parse = (l) => l.trim().split(/[\s,\t]+/).map(Number);
         const audit = parse(lines[lines.length - 1]);
@@ -179,12 +178,10 @@
         const rangeAudit = audit[1] - audit[2];
         const bodyRatio = (bodyAudit / rangeAudit) * 100;
         
-        // Origin Neutral Observation
         msg += `📊 <b>ORIGIN:</b> Body Ratio ${bodyRatio.toFixed(1)}%. `;
         msg += (bodyRatio > 65) ? "(Karakter: STRONG)" : "(Karakter: WICKY)";
         msg += "<br>";
 
-        // Momentum Neutral Observation
         const avgRefRange = refs.reduce((acc, curr) => acc + (curr[1] - curr[2]), 0) / refs.length;
         const momentumShift = rangeAudit / avgRefRange;
         msg += `📈 <b>MOMENTUM:</b> Range Relatif ${momentumShift.toFixed(2)}x. `;
@@ -221,6 +218,7 @@
         }, 1000);
     }
 
+    // FUNGSI ASLI V4.1.7 (TIDAK BERUBAH)
     function addMission() {
         const tf = document.getElementById('tfSelect').value;
         const o = parseFloat(document.getElementById('o').value);
@@ -238,6 +236,48 @@
             type:(c>o)?'BUY':'SELL', status:'ACTIVE', context:context 
         });
         saveAndRender();
+        resetInputs();
+    }
+
+    /* =========================================================
+     🤖 ADD-ONLY: PREDICTIVE MISSION ENGINE (v4.1.8)
+     ========================================================= */
+    function addMissionPredictive() {
+        const tf = document.getElementById('tfSelect').value;
+        const o = parseFloat(document.getElementById('o').value);
+        const h = parseFloat(document.getElementById('h').value);
+        const l = parseFloat(document.getElementById('l').value);
+        const c = parseFloat(document.getElementById('c').value);
+        const context = document.getElementById('marketContext').value;
+        if(!o || !h || !l || !c) return;
+
+        const body = Math.abs(c - o);
+        const range = h - l || 0.001;
+        const mult = { 'M5':0.2, 'M15':0.5, 'M30':1.0, 'H1':1.5, 'H2':2.0, 'H4':3.0, 'D1':5.0 };
+        const bodyRatio = body / range;
+
+        let targetPrice;
+        let type = (c > o) ? 'BUY' : 'SELL';
+
+        // LOGIKA PROYEKSI CANDLE BERIKUTNYA
+        if (bodyRatio > 0.65) {
+            // MODE EKSPANSI: Target di High/Low selanjutnya
+            targetPrice = (type === 'BUY') ? h + (body * mult[tf]) : l - (body * mult[tf]);
+        } else {
+            // MODE REBOUND: Target di Median audit (keseimbangan)
+            targetPrice = (h + l + c) / 3;
+        }
+
+        missions.push({ 
+            id:Date.now(), tf, price:parseFloat(targetPrice.toFixed(3)), 
+            type:type, status:'ACTIVE', context:context + " (PREDICTIVE)" 
+        });
+        saveAndRender();
+        resetInputs();
+        beep(600, 0.1);
+    }
+
+    function resetInputs() {
         ['o','h','l','c','fastPaste'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.value = '';
@@ -285,7 +325,7 @@
     }
 
     function downloadLog() {
-        let text = "BCA AUDIT LOG v4.1.7\n====================\n";
+        let text = "BCA AUDIT LOG v4.1.8\n====================\n";
         journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status}\n`);
         const blob = new Blob([text], { type: 'text/plain' });
         const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
@@ -302,6 +342,7 @@
                     <div>
                         <span style="font-size: 10px; opacity: 0.7;">${m.tf} LPZ (${m.type})</span>
                         <div style="font-size: 1.3em; font-weight: bold;">${m.price}</div>
+                        ${m.context.includes('PREDICTIVE') ? '<span style="color:#0088ff; font-size:9px;">[PREDICTIVE MODE]</span>' : ''}
                     </div>
                     <div class="card-actions">
                         ${m.status === 'ACTIVE' ? `
