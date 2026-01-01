@@ -1,3 +1,90 @@
+<!--
+Siap. Ini AUDIT CHECKLIST RESMI versi keras, teknis, dan anti-ngaco, khusus untuk BCA MONITOR v4.x lo.
+Checklist ini bisa lo pakai buat ngecek AI lain, developer lain, atau diri sendiri sebelum bilang “upgrade”.
+✅ AUDIT CHECKLIST — BCA MONITOR (ANTI RUSAK CORE)
+🟥 LEVEL 1 — CORE ENGINE (HARAM DISENTUH)
+Kalau SATU saja di bawah ini berubah → AUDIT GAGAL
+🔒 Data & State
+[ ] Struktur missions tidak berubah
+[ ] Struktur journal tidak berubah
+[ ] Key localStorage tetap:
+bcaMissions
+bcaJournal
+[ ] Tidak ada rename key
+[ ] Tidak ada migrasi data tersembunyi
+🔒 Logic Inti
+[ ] addMission() tidak diubah
+[ ] Formula LPZ:
+Bullish → high + |c-o| × VRE
+Bearish → low - |c-o| × VRE
+[ ] Mapping VRE TF identik
+[ ] Penentuan BUY / SELL tidak diubah
+[ ] checkAlerts() masih pakai:
+Manual price
+Status ACTIVE saja
+🔒 Status System
+[ ] Status valid tetap:
+ACTIVE
+TOUCHED
+FAILED
+TIMEOUT
+[ ] Tidak ada status baru
+[ ] Tidak ada auto-reset status
+[ ] Status change selalu masuk journal
+🟧 LEVEL 2 — ALERT & RISK CONTROL
+Perubahan di sini boleh ADD-ONLY, tapi tidak boleh melemahkan
+🔔 Audio & Alert
+[ ] beep() masih Web Audio API
+[ ] Tidak ada silent mode default
+[ ] News beep masih aktif < 5 menit
+📰 News Sentinel
+[ ] Countdown tetap real-time
+[ ] Warning visual tetap ada
+[ ] Tidak auto-disable news
+[ ] Tidak auto-clear mission
+🟨 LEVEL 3 — UI & UX (BOLEH ADD-ONLY)
+Boleh ditambah, tidak boleh menghilangkan
+🎛️ Control
+[ ] Tombol lama masih ada
+[ ] LOCK LPZ MONITOR tidak diganti
+[ ] FAIL / T.O / X masih ada per mission
+📱 Mobile Safety
+[ ] Tidak pakai hover-only action
+[ ] Tidak pakai popup blocking
+[ ] Font tetap terbaca di HP
+🟩 LEVEL 4 — ADD-ONLY PATCH (YANG SAH)
+Patch dianggap valid kalau memenuhi SEMUA:
+[ ] Tidak menyentuh fungsi lama
+[ ] Tidak override nama function lama
+[ ] Tidak intercept flow lama
+[ ] Efek patch eksplisit & sadar user
+✅ Contoh PATCH SAH:
+Clear journal
+Reset all data (dengan confirm)
+Export tambahan
+UI helper
+❌ Patch ILEGAL:
+Auto-clear mission
+Auto-edit status
+Auto-calc candle
+Auto-feed harga
+Auto “AI decision”
+🟥 LEVEL 5 — RED FLAGS (LANGSUNG TOLAK)
+Kalau nemu ini → STOP PAKAI
+[ ] Kata-kata: “optimalisasi”, “penyederhanaan”, “refactor”
+[ ] Logic dipindah ke function baru
+[ ] AI auto-analisis tanpa izin
+[ ] Penghapusan manual input
+[ ] Penggantian audit mindset → signal mindset
+🧠 FINAL AUDIT STATEMENT (WAJIB ADA)
+Setiap upgrade WAJIB bisa bilang jujur:
+“Upgrade ini TIDAK mengubah core logic,
+TIDAK menghapus fitur lama,
+dan MURNI ADD-ONLY.”
+Kalau gak berani nulis kalimat itu → upgrade batal.
+-->
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -87,7 +174,12 @@
             <thead><tr><th>TF</th><th>TYPE</th><th>LPZ PRICE</th><th>STATUS</th></tr></thead>
             <tbody></tbody>
         </table>
-        <button onclick="downloadLog()" style="margin-top:10px; background:#333; color:#aaa; padding:8px; font-size: 10px;">EXPORT AUDIT LOG (.TXT)</button>
+        
+        <div style="display: flex; gap: 5px;">
+            <button onclick="downloadLog()" style="margin-top:10px; background:#333; color:#aaa; padding:8px; font-size: 10px; flex: 2;">EXPORT AUDIT LOG (.TXT)</button>
+            <button onclick="clearAuditLog()" style="margin-top:10px; background:#ff4444; color:white; padding:8px; font-size: 10px; flex: 1.5;">CLEAR LOG</button>
+            <button onclick="resetAllData()" style="margin-top:10px; background:#555; color:white; padding:8px; font-size: 10px; flex: 1.5;">RESET ALL</button>
+        </div>
     </div>
 </div>
 
@@ -179,6 +271,21 @@
         const blob = new Blob([text], { type: 'text/plain' });
         const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
         a.href = window.URL.createObjectURL(blob); a.click();
+    }
+
+    // ADD ONLY: LOGIKA FUNGSI PENGHAPUS
+    function clearAuditLog() {
+        journal = [];
+        localStorage.setItem('bcaJournal', JSON.stringify(journal));
+        saveAndRender();
+        alert("Audit Log Berhasil Dibersihkan!");
+    }
+
+    function resetAllData() {
+        if (confirm("Hapus semua misi dan reset database?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 
     function saveAndRender() {
