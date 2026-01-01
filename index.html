@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCA MONITOR v4.1.5 - DECISION FRAMEWORK (ADD-ONLY)</title>
+    <title>BCA MONITOR v4.1.7 - NEUTRAL AUDIT</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; transition: background 0.3s; }
         .container { max-width: 550px; margin: auto; background: #0a0a0a; border: 2px solid #333; padding: 15px; border-radius: 12px; }
@@ -38,18 +38,20 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #222; padding: 5px; text-align: left; }
 
-        /* ADD-ONLY: DECISION FRAMEWORK STYLE */
         .df-box { border: 1px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 15px; background: #0a0a00; }
         .df-title { color: #ffcc00; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: block; }
         .df-item { margin-bottom: 5px; }
         .df-item label { font-size: 10px; color: #ccc; display: block; }
+
+        /* 🤖 ADD-ONLY: ASSISTANT STYLE - NEUTRALIZED */
+        .assistant-box { background: #000510; border: 1px solid #0088ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 11px; display: none; }
     </style>
 </head>
 <body id="mainBody">
 
 <div class="container">
-    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.5</h2>
-    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">DECISION FRAMEWORK - ADD ONLY</p>
+    <h2 style="text-align:center; color:#0f0; margin:5px; letter-spacing: 2px;">BCA MONITOR v4.1.7</h2>
+    <p style="text-align:center; font-size:10px; color:#777; margin-top:0;">DATA-DRIVEN AUDIT ASSISTANT</p>
 
     <div class="news-box">
         <input type="time" id="newsTime" onchange="setNewsTimer()">
@@ -62,9 +64,14 @@
         <input type="number" id="currentPrice" step="0.001" placeholder="RUNNING PRICE..." oninput="checkAlerts()">
     </div>
 
+    <div id="assistantPanel" class="assistant-box">
+        <span style="color:#0088ff; font-weight:bold;">🤖 AUDIT DATA OBSERVATION:</span>
+        <div id="assistantMsg" style="color:#eee; margin-top:5px; line-height:1.4; font-family: monospace;"></div>
+    </div>
+
     <div style="border: 1px solid #0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; background: #000500;">
-        <span style="font-size: 10px; color: #0f0;">QUICK AUDIT: PASTE OHLC HERE (O H L C)</span>
-        <input type="text" id="fastPaste" placeholder="O H L C" oninput="handleFastPaste(this.value)" style="border-color: #0f0;">
+        <span style="font-size: 10px; color: #0f0;">QUICK AUDIT: PASTE 4 LINES OHLC HERE (3 REF + 1 AUDIT)</span>
+        <textarea id="fastPaste" placeholder="O H L C (line 1)&#10;O H L C (line 2)&#10;O H L C (line 3)&#10;O H L C (Target Audit)" oninput="handleFastPaste(this.value)" style="background:#000; color:#0f0; border:1px solid #0f0; width:100%; height:80px; font-size:11px; padding:5px; border-radius:5px; font-family: monospace;"></textarea>
     </div>
 
     <div style="margin-bottom: 10px;">
@@ -145,13 +152,50 @@
     }
 
     function handleFastPaste(val) {
-        const parts = val.trim().split(/[\s,\t]+/);
+        const lines = val.trim().split('\n');
+        let targetLine = lines[lines.length - 1];
+        const parts = targetLine.trim().split(/[\s,\t]+/);
         if (parts.length >= 4) {
             document.getElementById('o').value = parts[0];
             document.getElementById('h').value = parts[1];
             document.getElementById('l').value = parts[2];
             document.getElementById('c').value = parts[3];
         }
+        if (lines.length >= 2) { runAssistant(lines); } 
+        else { document.getElementById('assistantPanel').style.display = 'none'; }
+    }
+
+    /* =========================================================
+     🔵 v4.1.7: NEUTRALIZED DATA OBSERVATION LOGIC
+     ========================================================= */
+    function runAssistant(lines) {
+        const parse = (l) => l.trim().split(/[\s,\t]+/).map(Number);
+        const audit = parse(lines[lines.length - 1]);
+        const refs = lines.slice(0, -1).map(parse).filter(r => r.length >= 4);
+        if(audit.length < 4 || refs.length === 0) return;
+
+        let msg = "";
+        const bodyAudit = Math.abs(audit[0] - audit[3]);
+        const rangeAudit = audit[1] - audit[2];
+        const bodyRatio = (bodyAudit / rangeAudit) * 100;
+        
+        // Origin Neutral Observation
+        msg += `📊 <b>ORIGIN:</b> Body Ratio ${bodyRatio.toFixed(1)}%. `;
+        msg += (bodyRatio > 65) ? "(Karakter: STRONG)" : "(Karakter: WICKY)";
+        msg += "<br>";
+
+        // Momentum Neutral Observation
+        const avgRefRange = refs.reduce((acc, curr) => acc + (curr[1] - curr[2]), 0) / refs.length;
+        const momentumShift = rangeAudit / avgRefRange;
+        msg += `📈 <b>MOMENTUM:</b> Range Relatif ${momentumShift.toFixed(2)}x. `;
+        if(momentumShift > 1.5) msg += "(Status: EXPANSION)";
+        else if(momentumShift < 0.6) msg += "(Status: CONTRACTION)";
+        else msg += "(Status: NEUTRAL)";
+
+        const panel = document.getElementById('assistantPanel');
+        const msgBox = document.getElementById('assistantMsg');
+        panel.style.display = 'block';
+        msgBox.innerHTML = msg;
     }
 
     function setNewsTimer() {
@@ -194,7 +238,11 @@
             type:(c>o)?'BUY':'SELL', status:'ACTIVE', context:context 
         });
         saveAndRender();
-        ['o','h','l','c','fastPaste'].forEach(id => document.getElementById(id).value = '');
+        ['o','h','l','c','fastPaste'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+        document.getElementById('assistantPanel').style.display = 'none';
     }
 
     function checkAlerts() {
@@ -237,7 +285,7 @@
     }
 
     function downloadLog() {
-        let text = "BCA AUDIT LOG v4.1.5\n====================\n";
+        let text = "BCA AUDIT LOG v4.1.7\n====================\n";
         journal.forEach(j => text += `[${j.timeStamp}] ${j.tf} | ${j.type} | LPZ: ${j.price} | STATUS: ${j.status}\n`);
         const blob = new Blob([text], { type: 'text/plain' });
         const a = document.createElement('a'); a.download = 'BCA_Audit_Log.txt';
